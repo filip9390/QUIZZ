@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>app</title>
+
+<style>
+
+body{
+  font-family: Arial, sans-serif;
+  background:black;
+  color:white;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+  margin:0;
+  text-align:center;
+  padding:20px;
+  box-sizing:border-box;
+}
+
+#quiz{
+  width:100%;
+  max-width:500px;
+}
+
+.question{
+  font-size:clamp(26px,6vw,34px);
+  margin-bottom:30px;
+}
+
+.options{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.option{
+  padding:18px 10px;
+  background:#222;
+  border-radius:12px;
+  cursor:pointer;
+  border:1px solid #555;
+  font-size:clamp(16px,4vw,20px);
+  transition:0.2s;
+}
+
+.option:hover{
+  background:#333;
+}
+
+.correct{
+  background:#4CAF50;
+}
+
+.wrong{
+  background:#f44336;
+}
+
+.result{
+  font-size:28px;
+  margin-top:25px;
+}
+
+button{
+  padding:12px 22px;
+  font-size:16px;
+  border-radius:10px;
+  border:none;
+  cursor:pointer;
+  background:#555;
+  color:white;
+  margin-bottom:25px;
+}
+
+button:hover{
+  background:#777;
+}
+
+.hidden{
+  display:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<button id="reverseBtn">Odwróć</button>
+
+<div id="quiz">
+  <div class="question" id="question"></div>
+  <div class="options" id="options"></div>
+</div>
+
+<div class="result" id="result"></div>
+
+<script>
+
+let quizData = [
+  {english:"fold",polish:"składać"},
+  {english:"have gotten",polish:"otrzymać"},
+  {english:"whether",polish:"czy"},
+  {english:"obstacle",polish:"przeszkoda"},
+  {english:"overcome",polish:"przezwyciężyć"},
+  {english:"stood",polish:"stał"},
+  {english:"messing",polish:"bałaganić"},
+  {english:"reached",polish:"osiągnął"},
+  {english:"leaps",polish:"skoki"},
+  {english:"incremental",polish:"narastający, stopniowy"}
+];
+
+let currentQuestion = 0;
+let score = 0;
+let startTime = Date.now();
+let reverse = false;
+
+function shuffleArray(array){
+  return array.sort(()=>Math.random()-0.5);
+}
+
+quizData = shuffleArray(quizData);
+
+function getRandomItems(array,num,exclude){
+  const filtered=array.filter(item=>item!==exclude);
+  const shuffled=shuffleArray(filtered);
+  return shuffled.slice(0,num);
+}
+
+function showQuestion(){
+
+  const q = quizData[currentQuestion];
+
+  const questionText = reverse ? q.polish : q.english;
+  const correctAnswer = reverse ? q.english : q.polish;
+
+  document.getElementById("question").textContent = questionText;
+
+  const wrongOptions = getRandomItems(
+    reverse ? quizData.map(x => x.english) : quizData.map(x => x.polish),
+    5,
+    correctAnswer
+  );
+
+  const allOptions = shuffleArray([correctAnswer, ...wrongOptions]);
+
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML="";
+
+  allOptions.forEach(opt=>{
+    const btn=document.createElement("div");
+    btn.textContent=opt;
+    btn.className="option";
+    btn.onclick=()=>checkAnswer(opt,correctAnswer);
+    optionsDiv.appendChild(btn);
+  });
+
+}
+
+function checkAnswer(selected,correctAnswer){
+
+  const optionButtons=document.querySelectorAll(".option");
+
+  optionButtons.forEach(btn=>{
+    if(btn.textContent===correctAnswer)
+      btn.classList.add("correct");
+    else
+      btn.classList.add("wrong");
+
+    btn.onclick=null;
+  });
+
+  if(selected===correctAnswer) score++;
+
+  setTimeout(()=>{
+    currentQuestion++;
+
+    if(currentQuestion<quizData.length)
+      showQuestion();
+    else
+      showResult();
+
+  },1200);
+
+}
+
+function showResult(){
+
+  document.getElementById("quiz").classList.add("hidden");
+
+  const endTime=Date.now();
+  const duration=Math.floor((endTime-startTime)/1000);
+  const percentage=Math.round((score/quizData.length)*100);
+
+  document.getElementById("result").innerHTML=
+  `Twój wynik: ${score} / ${quizData.length} (${percentage}%)<br>
+  Czas: ${duration} sekund`;
+
+}
+
+document.getElementById("reverseBtn").onclick=()=>{
+
+  reverse=!reverse;
+  currentQuestion=0;
+  score=0;
+  startTime=Date.now();
+  document.getElementById("result").innerHTML="";
+  document.getElementById("quiz").classList.remove("hidden");
+
+  showQuestion();
+
+};
+
+showQuestion();
+
+</script>
+
+</body>
+</html>
